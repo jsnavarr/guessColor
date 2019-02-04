@@ -1,0 +1,11 @@
+
+canvas{
+    background: azure;
+}
+
+body, html{
+    height: 100%;
+    background: black;
+    margin: 50px auto;
+    text-align: center;
+}
