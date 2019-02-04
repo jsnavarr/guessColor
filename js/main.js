@@ -1,6 +1,14 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
+function randomColor(){
+    var r= Math.floor(Math.random()*256);
+    var g= Math.floor(Math.random()*256);
+    var b= Math.floor(Math.random()*256);
+    return {r: r, g: g, b: b};
+    //return "rgb(" + r + ", "+g + ", " + b + ")";
+}
+
 class Ball {
     constructor(x, y, vx, vy, radius, color){
         this.x = x;
@@ -8,7 +16,7 @@ class Ball {
         this.vx = vx;
         this.vy = vy;
         this.radius = radius;
-        this.color = color;
+        this.color = randomColor();
     };
 }
 
@@ -20,8 +28,9 @@ class Bucket {
         this.h = h;
         this.hx = hx;
         this.hy = hy;
-        this.color = color;
+        this.color = randomColor();
         this.key = false;
+        this.catched = false;
     }
 }
 
@@ -38,11 +47,16 @@ window.addEventListener('keyup', function (e) {
     bucket.key = false;
 });
 
+function returnRGB(color){
+    return "rgb(" + color.r + ", "+color.g + ", " + color.b + ")";
+}
+
 function drawBubble(ball) {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2, true);
     ctx.closePath();
-    ctx.fillStyle = ball.color;
+    //ctx.fillStyle = ball.color;
+    ctx.fillStyle = returnRGB(ball.color);
     ctx.fill();
     ball.x += ball.vx;
     ball.y += ball.vy;
@@ -50,31 +64,66 @@ function drawBubble(ball) {
 }
 
 function drawBucket() {
-    // ctx.beginPath();
     ctx.fillStyle = 'blue';
     ctx.fillRect(bucket.x, bucket.y, bucket.w, bucket.h);
-    ctx.fillStyle = bucket.color;
+    ctx.fillStyle = returnRGB(bucket.color);
     ctx.fillRect(bucket.x+10, bucket.y+10, bucket.w-20, bucket.h-20);
-
-    // ctx.closePath();
-    
-    // ctx.fill();
-    // bucket.x += bucket.hx;
-    // bucket.y += bucket.hy;
 }
 
-function animateBubble() {
-    if (ball1.y + ball1.vy > canvas.height) {
-        // ball1.vy = 3;
+function mixColor(c1, c2){
+    return {r: c1.r*0.25+c2.r*0.75, g: c1.g*0.25+c2.g*0.75, b: c1.b*0.25+c2.b*0.75};
+}
+
+function animateBubbleAndBucket() {
+    //check if ball1 crashes with the bucket
+    if((ball1.y > bucket.y) && (ball1.x+30 > bucket.x && ball1.x-20 < bucket.x+100)){
+        ball1.y = 50;
+        if(!bucket.catched){
+            bucket.color = ball1.color;
+            bucket.catched = true;
+        } else {
+            bucket.color = mixColor (bucket.color, ball1.color);
+            console.log('ball1 bucket'+bucket.color);
+        }
+    } else if (ball1.y + ball1.vy > canvas.height) {
         ball1.y = 50;
     }
-    if (ball2.y + ball2.vy > canvas.height) {
-        // ball2.vy = 3;
+    //check if ball2 crashes with the bucket
+    if((ball2.y > bucket.y) && (ball2.x+30 > bucket.x && ball2.x-20 < bucket.x+100)){
+        ball2.y = 50;
+        if(!bucket.catched){
+            bucket.color = ball2.color;
+            bucket.catched = true;
+        } else {
+            bucket.color = mixColor (bucket.color, ball2.color);
+            console.log('ball2 bucket'+bucket.color);
+        }
+    } else if (ball2.y + ball2.vy > canvas.height) {
         ball2.y = 50;
     }
-    if (ball3.y + ball3.vy > canvas.height) {
-        // ball3.vy = 3;
+
+    if((ball3.y > bucket.y) && (ball3.x+30 > bucket.x && ball3.x-20 < bucket.x+100)){
         ball3.y = 50;
+        if(!bucket.catched){
+            bucket.color = ball3.color;
+            bucket.catched = true;
+        } else {
+            bucket.color = mixColor (bucket.color, ball3.color);
+            console.log('ball3 bucket'+bucket.color);
+        }
+    } else if (ball3.y + ball3.vy > canvas.height) {
+        ball3.y = 50;
+    }
+
+    //if left arrow is pushed down move box to the left if it is not already on the left margin
+    if (bucket.key && bucket.key == 37) {
+        if((bucket.x - bucket.hx) > 10)
+            bucket.x -= bucket.hx; 
+    }
+    //if right arrow is pushed down move box to the right if it is not already on the right margin
+    if (bucket.key && bucket.key == 39) {
+        if((bucket.x + bucket.w + bucket.hx) < canvas.width)
+            bucket.x += bucket.hx; 
     }
 
     ctx.clearRect(0,0, canvas.width, canvas.height);
@@ -85,29 +134,12 @@ function animateBubble() {
 
     ball3 = drawBubble(ball3);
 
-    window.requestAnimationFrame(animateBubble);
-}
-
-function animateBucket() {
-    if (bucket.key && bucket.key == 37) {
-        if((bucket.x - bucket.hx) > 10)
-            bucket.x -= bucket.hx; 
-    }
-    if (bucket.key && bucket.key == 39) {
-        if((bucket.x + bucket.w + bucket.hx) < canvas.width)
-            bucket.x += bucket.hx; 
-    }
-    // if (bucket.key && bucket.key == 38) {myGamePiece.speedY = -1; }
-    // if (bucket.key && bucket.key == 40) {myGamePiece.speedY = 1; }
-
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-
     drawBucket();
 
-    window.requestAnimationFrame(animateBucket);
+    window.requestAnimationFrame(animateBubbleAndBucket);
 }
 
-animateBubble();
+animateBubbleAndBucket();
 
 // drawBucket();
 // animateBucket();
