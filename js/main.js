@@ -11,6 +11,7 @@ class Ball {
         this.vy = vy;
         this.radius = radius;
         this.color = randomColor();
+        this.border = reverseColor(this.color);
     };
 }
 
@@ -22,20 +23,22 @@ class Bucket {
         this.h = h;
         this.hx = hx;
         this.hy = hy;
-        this.color = randomColor();
+        this.color = {r: 255, g: 255, b: 255};
+        this.border = reverseColor(targetColor);
+        console.log(this.border);
         this.key = false;
         this.catched = false;
     }
 }
 
 function init(){
-    ball1 = new Ball (canvas.width/4, 50, 0, 3, 50);
-    ball2 = new Ball (canvas.width/4*2, -36, 0, 3, 50);
-    ball3 = new Ball (canvas.width/4*3, -72, 0, 3, 50);
+    ball1 = new Ball (canvas.width/4, 50, 0, 3, 60);
+    ball2 = new Ball (canvas.width/4*2, -36, 0, 3, 60);
+    ball3 = new Ball (canvas.width/4*3, -72, 0, 3, 60);
     
     targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
     
-    bucket = new Bucket (10, canvas.height-110, 100, 100, 3, 0);
+    bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
 
     window.addEventListener('keydown', function (e) {
         bucket.key = e.keyCode;
@@ -67,7 +70,7 @@ function returnTargetColor(colors){
             mixElem.push(pickedElem)
         }
     }
-    console.log('Bubble ' + mixElem[0]+1 + ' and bubble ' + mixElem[1]+1);
+    console.log('Bubble ' + (mixElem[0]+1) + ' and bubble ' + (mixElem[1]+1));
     // mix the 2 elements (mixElem) and return the mixed color
     return {r: (colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5, g: (colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5, b: (colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5};
 }
@@ -75,8 +78,10 @@ function returnTargetColor(colors){
 function drawBubble(ball) {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2, true);
-    ctx.closePath();
-    //ctx.fillStyle = ball.color;
+    ctx.fillStyle = returnRGB(ball.border);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius-5, 0, Math.PI*2, true);
     ctx.fillStyle = returnRGB(ball.color);
     ctx.fill();
     ball.x += ball.vx;
@@ -84,16 +89,51 @@ function drawBubble(ball) {
     return ball;
 }
 
+function reverseColor (color){
+    reversedColor = {};
+    if(color.r <100) {
+        reversedColor.r = color.r+100;
+    } else {
+        reversedColor.r = color.r - 100;
+    }
+    if(color.g <100) {
+        reversedColor.g = color.g+100;
+    } else {
+        reversedColor.g = color.g - 100;
+    }
+    if(color.b <100) {
+        reversedColor.b = color.b+100;
+    } else {
+        reversedColor.b = color.b - 100;
+    }
+    return reversedColor;
+
+}
+
 function drawBucket() {
-    ctx.fillStyle = 'blue';
-    ctx.fillRect(bucket.x, bucket.y, bucket.w, bucket.h);
+    ctx.beginPath();
+    ctx.moveTo(bucket.x, bucket.y);
+    ctx.lineTo(bucket.x+bucket.w, bucket.y);
+    ctx.lineTo(bucket.x+bucket.w-20, bucket.y+bucket.h);
+    ctx.lineTo(bucket.x +20, bucket.y+bucket.h);
+    ctx.lineTo(bucket.x, bucket.y);
+    ctx.fill();
+    ctx.fillStyle = returnRGB(bucket.border);
+    // ctx.fillRect(bucket.x, bucket.y, bucket.w, bucket.h);
+    ctx.beginPath();
+    ctx.moveTo(bucket.x+5, bucket.y);
+    ctx.lineTo(bucket.x+bucket.w-5, bucket.y);
+    ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
+    ctx.lineTo(bucket.x +30, bucket.y+bucket.h-5);
+    ctx.lineTo(bucket.x+5, bucket.y);
     ctx.fillStyle = returnRGB(bucket.color);
-    ctx.fillRect(bucket.x+10, bucket.y+10, bucket.w-20, bucket.h-20);
+    ctx.fill();
+    // ctx.fillRect(bucket.x+5, bucket.y, bucket.w-10, bucket.h-5);
 }
 
 function mixColor(c1, c2){
     var mixedColor =  {r: c1.r*0.5+c2.r*0.5, g: c1.g*0.5+c2.g*0.5, b: c1.b*0.5+c2.b*0.5};
-    console.log('color 1' + c1 + 'combined with' + c2 + 'is ' + mixedColor);
+    // console.log('color 1' + c1 + 'combined with' + c2 + 'is ' + mixedColor);
     return mixedColor;
 }
 
@@ -106,7 +146,6 @@ function animateBubbleAndBucket() {
             bucket.catched = true;
         } else {
             bucket.color = mixColor (bucket.color, ball1.color);
-            console.log('ball1 bucket'+bucket.color);
         }
     } else if (ball1.y + ball1.vy > canvas.height) {
         ball1.y = 50;
@@ -119,7 +158,6 @@ function animateBubbleAndBucket() {
             bucket.catched = true;
         } else {
             bucket.color = mixColor (bucket.color, ball2.color);
-            console.log('ball2 bucket'+bucket.color);
         }
     } else if (ball2.y + ball2.vy > canvas.height) {
         ball2.y = 50;
@@ -132,7 +170,6 @@ function animateBubbleAndBucket() {
             bucket.catched = true;
         } else {
             bucket.color = mixColor (bucket.color, ball3.color);
-            console.log('ball3 bucket'+bucket.color);
         }
     } else if (ball3.y + ball3.vy > canvas.height) {
         ball3.y = 50;
@@ -145,7 +182,7 @@ function animateBubbleAndBucket() {
     }
     //if right arrow is pushed down move box to the right if it is not already on the right margin
     if (bucket.key && bucket.key == 39) {
-        if((bucket.x + bucket.w + bucket.hx) < canvas.width)
+        if((bucket.x + bucket.w + bucket.hx) < canvas.width-10)
             bucket.x += bucket.hx; 
     }
     ctx.fillStyle = returnRGB(targetColor);
