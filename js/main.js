@@ -1,16 +1,10 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
-function randomColor(){
-    var r= Math.floor(Math.random()*256);
-    var g= Math.floor(Math.random()*256);
-    var b= Math.floor(Math.random()*256);
-    return {r: r, g: g, b: b};
-    //return "rgb(" + r + ", "+g + ", " + b + ")";
-}
+var targetColor;
 
 class Ball {
-    constructor(x, y, vx, vy, radius, color){
+    constructor(x, y, vx, vy, radius){
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -21,7 +15,7 @@ class Ball {
 }
 
 class Bucket {
-    constructor(x, y, w, h, hx, hy, color){
+    constructor(x, y, w, h, hx, hy){
         this.x = x;
         this.y = y;
         this.w = w;
@@ -34,21 +28,48 @@ class Bucket {
     }
 }
 
-ball1 = new Ball (canvas.width/4, 50, 0, 3, 50, 'blue');
-ball2 = new Ball (canvas.width/4*2, -36, 0, 3, 50, 'red');
-ball3 = new Ball (canvas.width/4*3, -72, 0, 3, 50, 'yellow');
+function init(){
+    ball1 = new Ball (canvas.width/4, 50, 0, 3, 50);
+    ball2 = new Ball (canvas.width/4*2, -36, 0, 3, 50);
+    ball3 = new Ball (canvas.width/4*3, -72, 0, 3, 50);
+    
+    targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
+    
+    bucket = new Bucket (10, canvas.height-110, 100, 100, 3, 0);
 
-bucket = new Bucket (10, canvas.height-110, 100, 100, 3, 0, 'pink');
+    window.addEventListener('keydown', function (e) {
+        bucket.key = e.keyCode;
+    });
+    window.addEventListener('keyup', function (e) {
+        bucket.key = false;
+    });
+}
 
-window.addEventListener('keydown', function (e) {
-    bucket.key = e.keyCode;
-});
-window.addEventListener('keyup', function (e) {
-    bucket.key = false;
-});
 
 function returnRGB(color){
     return "rgb(" + color.r + ", "+color.g + ", " + color.b + ")";
+}
+
+function randomColor(){
+    var r= Math.floor(Math.random()*256);
+    var g= Math.floor(Math.random()*256);
+    var b= Math.floor(Math.random()*256);
+    return {r: r, g: g, b: b};
+}
+
+function returnTargetColor(colors){
+    var mixElem = [];
+    var pickedElem; //to compare the mixElem with a new random element
+    mixElem.push(Math.floor(Math.random()*3)); //get a random element between 0 and 2 and that will be the first color to mix
+    while(mixElem.length<2){ //will loop while we have only 1 color to mix (random function may generate again the number we already picked)
+        pickedElem = Math.floor(Math.random()*3);
+        if(pickedElem != mixElem[0]){  //if the new random number is not the same than the one we had (mixElem) then keep it
+            mixElem.push(pickedElem)
+        }
+    }
+    console.log('mixElem' + mixElem);
+    // mix the 2 elements (mixElem) and return the mixed color
+    return {r: (colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5, g: (colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5, b: (colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5};
 }
 
 function drawBubble(ball) {
@@ -71,7 +92,9 @@ function drawBucket() {
 }
 
 function mixColor(c1, c2){
-    return {r: c1.r*0.25+c2.r*0.75, g: c1.g*0.25+c2.g*0.75, b: c1.b*0.25+c2.b*0.75};
+    var mixedColor =  {r: c1.r*0.5+c2.r*0.5, g: c1.g*0.5+c2.g*0.5, b: c1.b*0.5+c2.b*0.5};
+    console.log('color 1' + c1 + 'combined with' + c2 + 'is ' + mixedColor);
+    return mixedColor;
 }
 
 function animateBubbleAndBucket() {
@@ -125,8 +148,10 @@ function animateBubbleAndBucket() {
         if((bucket.x + bucket.w + bucket.hx) < canvas.width)
             bucket.x += bucket.hx; 
     }
+    ctx.fillStyle = returnRGB(targetColor);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.clearRect(0,0, canvas.width, canvas.height);
+    // ctx.clearRect(0,0, canvas.width, canvas.height);
 
     ball1 = drawBubble(ball1);
 
@@ -139,6 +164,7 @@ function animateBubbleAndBucket() {
     window.requestAnimationFrame(animateBubbleAndBucket);
 }
 
+init();
 animateBubbleAndBucket();
 
 // drawBucket();
