@@ -3,10 +3,27 @@ var ctx = canvas.getContext('2d');
 
 var targetColor;
 
+class Player {
+    constructor(points){
+        this.points = points;
+    }
+}
+
+class Game {
+    constructor(timeToReset){
+        this.timeToReset = timeToReset;
+        this.match = false;
+    }
+}
+
+player = new Player (10);
+
+game = new Game(20, false);
+
 class Ball {
     constructor(x, y, vx, vy, radius){
         this.x = x;
-        this.y= -(Math.floor(Math.random()*250))+50;
+        this.y= -(Math.floor(Math.random()*250))+60;
         this.vx = vx;
         this.vy = vy;
         this.radius = radius;
@@ -28,6 +45,7 @@ class Bucket {
         console.log(this.border);
         this.key = false;
         this.catched = false;
+        this.bubblesCatched = 0;
     }
 }
 
@@ -40,6 +58,8 @@ function init(){
     
     bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
 
+    game.match = false;
+
     window.addEventListener('keydown', function (e) {
         bucket.key = e.keyCode;
     });
@@ -48,11 +68,12 @@ function init(){
     });
 }
 
-
+//gets an object {r: , g: , b: } and return a string as the actual RGB style
 function returnRGB(color){
     return "rgb(" + color.r + ", "+color.g + ", " + color.b + ")";
 }
 
+//generate random colors for each RGB element
 function randomColor(){
     var r= Math.floor(Math.random()*256);
     var g= Math.floor(Math.random()*256);
@@ -60,6 +81,7 @@ function randomColor(){
     return {r: r, g: g, b: b};
 }
 
+//returns the target color which is made of the color of 2 bubbles randomly selected
 function returnTargetColor(colors){
     var mixElem = [];
     var pickedElem; //to compare the mixElem with a new random element
@@ -75,6 +97,7 @@ function returnTargetColor(colors){
     return {r: (colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5, g: (colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5, b: (colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5};
 }
 
+//draw the bubble in the parameter
 function drawBubble(ball) {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2, true);
@@ -89,6 +112,7 @@ function drawBubble(ball) {
     return ball;
 }
 
+// returns kind of the reverse color adding or substracting 100 to each RGB value
 function reverseColor (color){
     reversedColor = {};
     if(color.r <100) {
@@ -110,6 +134,7 @@ function reverseColor (color){
 
 }
 
+//draw the bucket
 function drawBucket() {
     ctx.beginPath();
     ctx.moveTo(bucket.x, bucket.y);
@@ -117,8 +142,9 @@ function drawBucket() {
     ctx.lineTo(bucket.x+bucket.w-20, bucket.y+bucket.h);
     ctx.lineTo(bucket.x +20, bucket.y+bucket.h);
     ctx.lineTo(bucket.x, bucket.y);
-    ctx.fill();
     ctx.fillStyle = returnRGB(bucket.border);
+    ctx.fill();
+    
     // ctx.fillRect(bucket.x, bucket.y, bucket.w, bucket.h);
     ctx.beginPath();
     ctx.moveTo(bucket.x+5, bucket.y);
@@ -131,12 +157,14 @@ function drawBucket() {
     // ctx.fillRect(bucket.x+5, bucket.y, bucket.w-10, bucket.h-5);
 }
 
+//mixes the 2 RGB colors sent as parameters
 function mixColor(c1, c2){
     var mixedColor =  {r: c1.r*0.5+c2.r*0.5, g: c1.g*0.5+c2.g*0.5, b: c1.b*0.5+c2.b*0.5};
     // console.log('color 1' + c1 + 'combined with' + c2 + 'is ' + mixedColor);
     return mixedColor;
 }
 
+//main function to be 
 function animateBubbleAndBucket() {
     //check if ball1 crashes with the bucket
     if((ball1.y > bucket.y) && (ball1.x+30 > bucket.x && ball1.x-20 < bucket.x+100)){
@@ -175,6 +203,15 @@ function animateBubbleAndBucket() {
         ball3.y = 50;
     }
 
+    //check if there is a winner
+    if(!game.match){  //not a winner yet
+        if(bucket.color = targetColor){
+            game.match = true;
+            player.points++;
+            console.log('winner');
+            console.log('points '+player.points);
+        }
+    }
     //if left arrow is pushed down move box to the left if it is not already on the left margin
     if (bucket.key && bucket.key == 37) {
         if((bucket.x - bucket.hx) > 10)
@@ -185,8 +222,12 @@ function animateBubbleAndBucket() {
         if((bucket.x + bucket.w + bucket.hx) < canvas.width-10)
             bucket.x += bucket.hx; 
     }
-    ctx.fillStyle = returnRGB(targetColor);
+    //make a little frame to the canvas area
+    ctx.fillStyle = returnRGB(reverseColor(targetColor));
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = returnRGB(targetColor);
+    ctx.fillRect(5, 5, canvas.width-10, canvas.height-10);
 
     // ctx.clearRect(0,0, canvas.width, canvas.height);
 
@@ -203,6 +244,7 @@ function animateBubbleAndBucket() {
 
 init();
 animateBubbleAndBucket();
+setInterval(init, 80000);
 
 // drawBucket();
 // animateBucket();
