@@ -6,7 +6,7 @@ var targetColor;
 class Ball {
     constructor(x, y, vx, vy, radius){
         this.x = x;
-        this.y = y;
+        this.y= -(Math.floor(Math.random()*250))+50;
         this.vx = vx;
         this.vy = vy;
         this.radius = radius;
@@ -67,7 +67,7 @@ function returnTargetColor(colors){
             mixElem.push(pickedElem)
         }
     }
-    console.log('mixElem' + mixElem);
+    console.log('Bubble ' + mixElem[0]+1 + ' and bubble ' + mixElem[1]+1);
     // mix the 2 elements (mixElem) and return the mixed color
     return {r: (colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5, g: (colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5, b: (colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5};
 }
