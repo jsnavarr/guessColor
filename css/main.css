@@ -1,11 +1,43 @@
 
-/* canvas{
+canvas{
     background: azure;
-} */
+    border-radius: 20px;
+}
 
 body, html{
     height: 100%;
     background: black;
-    margin: 50px auto;
+    margin: 10px auto;
     text-align: center;
+    
 }
+
+#reset-button, #message-line {
+    background: royalblue;
+    color: azure;
+    font-size: 24px;
+    font-family: helvetica;
+}
+
+#message-line {
+    width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: 5px double azure;
+    border-radius: 20px;
+}
+
+#score {
+    padding: 0px 30px;
+    color: yellow;
+}
+#reset-button {
+    padding: 0px 50px;
+    border: 5px double maroon;
+    border-radius: 20px;
+    color: maroon;
+    background-color: lightsalmon;
+}
+
