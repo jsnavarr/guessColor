@@ -3,39 +3,15 @@ var ctx = canvas.getContext('2d');
 
 var targetColor;
 
-var raf;
-
-class Player {
-    constructor(points){
-        this.points = points;
-    }
-}
-
-class Game {
-    constructor(timeToReset){
-        this.timeToReset = timeToReset;
-        this.match = false;
-    }
-    pauseGame (timeToPause){
-        clearInterval(myTimer);
-        // window.cancelAnimationFrame(raf);
-        setTimeout(function() {
-            init();
-            myTimer = setInterval(init, game.timeToReset*1000);
-            console.log('winner');
-            console.log('points '+player.points);
-            console.log('game was paused');
-        }, timeToPause*1000);
-    }
-}
-
-player = new Player (11);
-
-game = new Game(20, false);
-
-bucket = null;
-
+var raf; //handler for the requestAnimationFram, setInterval, etc.
 var myTimer;
+
+//pointers for the information to be displayed 
+var $playerScore = document.querySelector("#score span");
+var $playerMatches = document.querySelector("#matches span");
+var $playerMissmatches = document.querySelector("#missmatches span");
+// var $resetButton = document.getElementById("reset-button").addEventListener('click', resetGame);
+
 class Ball {
     constructor(x, y, vx, vy, radius){
         this.x = x;
@@ -46,6 +22,11 @@ class Ball {
         this.color = randomColor();
         this.border = reverseColor(this.color);
     };
+    resetBall(){
+        this.y= -(Math.floor(Math.random()*250))+60;
+        this.color = randomColor();
+        this.border = reverseColor(this.color);
+    }
 }
 
 class Bucket {
@@ -58,38 +39,122 @@ class Bucket {
         this.hy = hy;
         this.color = {r: 255, g: 255, b: 255};
         this.border = reverseColor(targetColor);
-        console.log(this.border);
         this.key = false;
         this.catched = false;
         this.bubblesCatched = [];
+    };
+    resetBucket(){
+        this.border = reverseColor(targetColor);
+        this.key = false;
+        this.catched = false;
+        this.bubblesCatched = [];
+    };
+    
+}
+
+class Player {
+    constructor(points){
+        this.points = points;
+        this.matches = 0;
+        this.missmatches = 0;
+    };
+    resetPlayer(){
+        this.matches = 0;
+        this.missmatches = 0;
+    }
+}
+
+class Game {
+    constructor(timeToReset){
+        this.timeToReset = timeToReset;
+        this.match = false;
+        this.isOver = false;
+    };
+    resetGame(){
+        clearInterval(myTimer);
+        cancelAnimationFrame(raf);
+        // player.resetPlayer();
+        // this.match = false;
+        // this.isOver = false;
+
+        // bucket.resetBucket();
+        init();
+        $playerMissmatches.textContent = player.missmatches;
+        $playerMatches.textContent = player.matches;        
+        // nextCombination();
+        animateBubbleAndBucket();
+        myTimer = setInterval(nextCombination, game.timeToReset*1000);
+        $playerScore.textContent = player.points;
+        
+    }
+    pauseGame (timeToPause){
+        clearInterval(myTimer);
+        // window.cancelAnimationFrame(raf);
+        setTimeout(function() {
+            // init();
+            nextCombination();
+            myTimer = setInterval(init, game.timeToReset*1000);
+            // $playerScore.textContent = player.points;
+            console.log('winner');
+            console.log('points '+player.points);
+            console.log('game was paused');
+        }, timeToPause*1000);
+    }
+    displayGameOver(){
+        ctx.font = "80px Arial";
+        ctx.fillStyle = "red";
+        ctx.textAlign = "center";
+        ctx.fillText("G A M E   O V E R", canvas.width/2, canvas.height/2);
+    }
+}
+
+
+function nextCombination(){
+    ball1.resetBall();
+    ball2.resetBall();
+    ball3.resetBall();
+    
+    targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
+
+    bucket.resetBucket();
+
+    if (!game.match){
+        player.points--;
+        player.missmatches++;
+        $playerScore.textContent = player.points;
+        $playerMissmatches.textContent = player.missmatches;
+        if(player.points == 0){
+            game.isOver = true;
+            game.displayGameOver();
+        }
+        console.log('points '+player.points);
+    } else {
+        game.match = false;
     }
 }
 
 function init(){
+    // var canvas = document.getElementById('canvas');
+    // var ctx = canvas.getContext('2d');
+
+    // if(!game.isOver){
     ball1 = new Ball (canvas.width/4, 50, 0, 3, 60);
     ball2 = new Ball (canvas.width/4*2, -36, 0, 3, 60);
     ball3 = new Ball (canvas.width/4*3, -72, 0, 3, 60);
     
     targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
+    // targetColor = null;
 
-    if (bucket == null) {
-        bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
-    } else {
-        bucket.color = {r: 255, g: 255, b: 255};
-        bucket.border = reverseColor(targetColor);
-        bucket.catched = false;
-        bucket.bubblesCatched = [];
-    }
-    if (!game.match){
-        player.points-=1;
-        console.log('points '+player.points);
-    } else {
-        game.match = false;
-    }
+    bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
+
+    player = new Player(10);
+    game = new Game(10);
+    var $resetButton = document.getElementById("reset-button").addEventListener('click', game.resetGame);
 
     window.addEventListener('keydown', function (e) {
         bucket.key = e.keyCode;
     });
+    
     window.addEventListener('keyup', function (e) {
         bucket.key = false;
     });
@@ -238,152 +303,104 @@ function mixColor(c1, c2){
 
 //main function to be 
 function animateBubbleAndBucket() {
-    if(!game.match){
-    //check if ball1 crashes with the bucket
-    if((ball1.y > bucket.y) && (ball1.x+30 > bucket.x && ball1.x-20 < bucket.x+100)){
-        ball1.y = 50;
-        if(bucket.bubblesCatched.length == 0){
-            bucket.color = ball1.color;
-            bucket.bubblesCatched.push(1);
-            // bucket.catched = true;
-        } else {
-            if(bucket.bubblesCatched.indexOf(1) == -1 && bucket.bubblesCatched.length < 2){
-                bucket.color = mixColor (bucket.color, ball1.color);
-                bucket.bubblesCatched.push(1);
+    if(!game.isOver){
+        if(!game.match ){
+            //check if ball1 crashes with the bucket
+            if((ball1.y > bucket.y) && (ball1.x+30 > bucket.x && ball1.x-20 < bucket.x+100)){
+                ball1.y = 50;
+                if(bucket.bubblesCatched.length == 0){
+                    bucket.color = ball1.color;
+                    bucket.bubblesCatched.push(1);
+                    // bucket.catched = true;
+                } else {
+                    if(bucket.bubblesCatched.indexOf(1) == -1 && bucket.bubblesCatched.length < 2){
+                        bucket.color = mixColor (bucket.color, ball1.color);
+                        bucket.bubblesCatched.push(1);
+                    }
+                }
+            } else if (ball1.y + ball1.vy > canvas.height) {
+                ball1.y = 50;
+            }
+            //check if ball2 crashes with the bucket
+            if((ball2.y > bucket.y) && (ball2.x+30 > bucket.x && ball2.x-20 < bucket.x+100)){
+                ball2.y = 50;
+                if(bucket.bubblesCatched.length == 0){
+                    bucket.color = ball2.color;
+                    bucket.bubblesCatched.push(2);
+                    // bucket.catched = true;
+                } else {
+                    if(bucket.bubblesCatched.indexOf(2) == -1 && bucket.bubblesCatched.length < 2){
+                        bucket.color = mixColor (bucket.color, ball2.color);
+                        bucket.bubblesCatched.push(2);
+                    }
+                }
+            } else if (ball2.y + ball2.vy > canvas.height) {
+                ball2.y = 50;
+            }
+
+            if((ball3.y > bucket.y) && (ball3.x+30 > bucket.x && ball3.x-20 < bucket.x+100)){
+                ball3.y = 50;
+                if(bucket.bubblesCatched.length == 0){
+                    bucket.color = ball3.color;
+                    bucket.bubblesCatched.push(3);
+                    // bucket.catched = true;
+                } else {
+                    if(bucket.bubblesCatched.indexOf(3) == -1 && bucket.bubblesCatched.length < 2){
+                        bucket.color = mixColor (bucket.color, ball3.color);
+                        bucket.bubblesCatched.push(3);
+                    }
+                }
+            } else if (ball3.y + ball3.vy > canvas.height) {
+                ball3.y = 50;
+            }
+
+            //check if there is a winner
+            if(!game.match){  //not a winner yet
+                if(bucket.bubblesCatched.length == 2){
+                    if(JSON.stringify(bucket.color) === JSON.stringify(targetColor)){ //there is a winner
+                        game.match = true;
+                        player.points++;
+                        player.matches++;
+                        $playerScore.textContent = player.points;
+                        $playerMatches.textContent = player.matches;
+                        game.pauseGame(2);    
+                    } 
+                }
             }
         }
-    } else if (ball1.y + ball1.vy > canvas.height) {
-        ball1.y = 50;
-    }
-    //check if ball2 crashes with the bucket
-    if((ball2.y > bucket.y) && (ball2.x+30 > bucket.x && ball2.x-20 < bucket.x+100)){
-        ball2.y = 50;
-        if(bucket.bubblesCatched.length == 0){
-            bucket.color = ball2.color;
-            bucket.bubblesCatched.push(2);
-            // bucket.catched = true;
-        } else {
-            if(bucket.bubblesCatched.indexOf(2) == -1 && bucket.bubblesCatched.length < 2){
-                bucket.color = mixColor (bucket.color, ball2.color);
-                bucket.bubblesCatched.push(2);
-            }
+        //if left arrow is pushed down move box to the left if it is not already on the left margin
+        if (bucket.key && bucket.key == 37) {
+            if((bucket.x - bucket.hx) > 10)
+                bucket.x -= bucket.hx; 
         }
-    } else if (ball2.y + ball2.vy > canvas.height) {
-        ball2.y = 50;
-    }
-
-    if((ball3.y > bucket.y) && (ball3.x+30 > bucket.x && ball3.x-20 < bucket.x+100)){
-        ball3.y = 50;
-        if(bucket.bubblesCatched.length == 0){
-            bucket.color = ball3.color;
-            bucket.bubblesCatched.push(3);
-            // bucket.catched = true;
-        } else {
-            if(bucket.bubblesCatched.indexOf(3) == -1 && bucket.bubblesCatched.length < 2){
-                bucket.color = mixColor (bucket.color, ball3.color);
-                bucket.bubblesCatched.push(3);
-            }
+        //if right arrow is pushed down move box to the right if it is not already on the right margin
+        if (bucket.key && bucket.key == 39) {
+            if((bucket.x + bucket.w + bucket.hx) < canvas.width-10)
+                bucket.x += bucket.hx; 
         }
-    } else if (ball3.y + ball3.vy > canvas.height) {
-        ball3.y = 50;
+
+        //make a little frame to the canvas area
+        ctx.fillStyle = returnRGB(reverseColor(targetColor));
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = returnRGB(targetColor);
+        ctx.fillRect(5, 5, canvas.width-10, canvas.height-10);
+
+        // ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        ball1 = drawBubble(ball1);
+
+        ball2 = drawBubble(ball2);
+
+        ball3 = drawBubble(ball3);
+
+        drawBucket(game.match);
+
+        raf = window.requestAnimationFrame(animateBubbleAndBucket);
     }
-
-    //check if there is a winner
-    if(!game.match){  //not a winner yet
-        if(bucket.bubblesCatched.length == 2){
-            if(JSON.stringify(bucket.color) === JSON.stringify(targetColor)){ //there is a winner
-                game.match = true;
-                player.points++;
-                game.pauseGame(2);    
-            } 
-        }
-    }
-    }
-    //if left arrow is pushed down move box to the left if it is not already on the left margin
-    if (bucket.key && bucket.key == 37) {
-        if((bucket.x - bucket.hx) > 10)
-            bucket.x -= bucket.hx; 
-    }
-    //if right arrow is pushed down move box to the right if it is not already on the right margin
-    if (bucket.key && bucket.key == 39) {
-        if((bucket.x + bucket.w + bucket.hx) < canvas.width-10)
-            bucket.x += bucket.hx; 
-    }
-
-    //make a little frame to the canvas area
-    ctx.fillStyle = returnRGB(reverseColor(targetColor));
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = returnRGB(targetColor);
-    ctx.fillRect(5, 5, canvas.width-10, canvas.height-10);
-
-    // ctx.clearRect(0,0, canvas.width, canvas.height);
-
-    ball1 = drawBubble(ball1);
-
-    ball2 = drawBubble(ball2);
-
-    ball3 = drawBubble(ball3);
-
-    drawBucket(game.match);
-
-    raf = window.requestAnimationFrame(animateBubbleAndBucket);
 }
 
 init();
+// resetGame();
 animateBubbleAndBucket();
-myTimer = setInterval(init, game.timeToReset*1000);
-
-// drawBucket();
-// animateBucket();
-
-
-// function drawCircles() {
-//     var ctx = document.getElementById('myCanvas').getContext('2d');
-//     for (var i = 0; i < 6; i++) {
-//       for (var j = 0; j < 6; j++) {
-//         ctx.strokeStyle = 'rgb(0, ' + Math.floor(255 - 42.5 * i) + ', ' + 
-//                          Math.floor(255 - 42.5 * j) + ')';
-//         ctx.beginPath();
-//         ctx.arc(12.5 + j * 25, 12.5 + i * 25, 10, 0, Math.PI * 2, true);
-//         ctx.stroke();
-//       }
-//     }
-//   }
-
-//   function drawRect() {
-//     var ctx = document.getElementById('myCanvas').getContext('2d');
-//     for (var i = 0; i < 6; i++) {
-//       for (var j = 0; j < 6; j++) {
-//         ctx.fillStyle = 'rgb(' + Math.floor(255 - 42.5 * i) + ', ' +
-//                          Math.floor(255 - 42.5 * j) + ', 0)';
-//         ctx.fillRect(j * 25, i * 25, 25, 25);
-//       }
-//     }
-//   }
-
-//   function drawOneCircle() {
-//     var ctx = document.getElementById('myCanvas').getContext('2d'); 
-//     ctx.beginPath(); 
-//     ctx.arc(50, 50, 30, 0, Math.PI * 2, true);
-//     ctx.arc(50, 50, 15, 0, Math.PI * 2, true);
-//     ctx.fill('evenodd');
-//   }
-
-//   function drawHeart() {
-//     var canvas = document.getElementById('myCanvas');
-//     if (canvas.getContext) {
-//       var ctx = canvas.getContext('2d');
-  
-//       // Cubic curves example
-//       ctx.beginPath();
-//       ctx.moveTo(75, 40);
-//       ctx.bezierCurveTo(75, 37, 70, 25, 50, 25);
-//       ctx.bezierCurveTo(20, 25, 20, 62.5, 20, 62.5);
-//       ctx.bezierCurveTo(20, 80, 40, 102, 75, 120);
-//       ctx.bezierCurveTo(110, 102, 130, 80, 130, 62.5);
-//       ctx.bezierCurveTo(130, 62.5, 130, 25, 100, 25);
-//       ctx.bezierCurveTo(85, 25, 75, 37, 75, 40);
-//       ctx.fill();
-//     }
-//   }
+myTimer = setInterval(nextCombination, game.timeToReset*1000);
