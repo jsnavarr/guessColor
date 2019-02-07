@@ -70,6 +70,13 @@ class Game {
         this.match = false;
         this.isOver = false;
     };
+    
+    updateMessageLine(){
+        $playerScore.textContent = player.points;
+        $playerMatches.textContent = player.matches;
+        $playerMissmatches.textContent = player.missmatches;
+    };
+
     resetGame(){
         clearInterval(myTimer);
         cancelAnimationFrame(raf);
@@ -79,12 +86,13 @@ class Game {
 
         // bucket.resetBucket();
         init();
-        $playerMissmatches.textContent = player.missmatches;
-        $playerMatches.textContent = player.matches;        
+        game.updateMessageLine();
+        // $playerMissmatches.textContent = player.missmatches;
+        // $playerMatches.textContent = player.matches;        
         // nextCombination();
         animateBubbleAndBucket();
         myTimer = setInterval(nextCombination, game.timeToReset*1000);
-        $playerScore.textContent = player.points;
+        // $playerScore.textContent = player.points;
         
     }
     pauseGame (timeToPause){
@@ -93,7 +101,7 @@ class Game {
         setTimeout(function() {
             // init();
             nextCombination();
-            myTimer = setInterval(init, game.timeToReset*1000);
+            myTimer = setInterval(nextCombination, game.timeToReset*1000);
             // $playerScore.textContent = player.points;
             console.log('winner');
             console.log('points '+player.points);
@@ -105,6 +113,7 @@ class Game {
         ctx.fillStyle = "red";
         ctx.textAlign = "center";
         ctx.fillText("G A M E   O V E R", canvas.width/2, canvas.height/2);
+        clearInterval(myTimer);
     }
 }
 
@@ -118,11 +127,11 @@ function nextCombination(){
 
     bucket.resetBucket();
 
-    if (!game.match){
+    if (!game.match){ //no winner
         player.points--;
         player.missmatches++;
-        $playerScore.textContent = player.points;
-        $playerMissmatches.textContent = player.missmatches;
+        // $playerScore.textContent = player.points;
+        // $playerMissmatches.textContent = player.missmatches;
         if(player.points == 0){
             game.isOver = true;
             game.displayGameOver();
@@ -131,6 +140,7 @@ function nextCombination(){
     } else {
         game.match = false;
     }
+    game.updateMessageLine();
 }
 
 function init(){
@@ -147,8 +157,9 @@ function init(){
 
     bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
 
-    player = new Player(10);
-    game = new Game(10);
+    player = new Player(2);
+    game = new Game(15);
+    game.updateMessageLine();
     var $resetButton = document.getElementById("reset-button").addEventListener('click', game.resetGame);
 
     window.addEventListener('keydown', function (e) {
@@ -361,8 +372,8 @@ function animateBubbleAndBucket() {
                         game.match = true;
                         player.points++;
                         player.matches++;
-                        $playerScore.textContent = player.points;
-                        $playerMatches.textContent = player.matches;
+                        // $playerScore.textContent = player.points;
+                        // $playerMatches.textContent = player.matches;
                         game.pauseGame(2);    
                     } 
                 }
