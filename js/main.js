@@ -69,6 +69,28 @@ class Game {
         this.secondsCounter = 0; //to count the seconds elapsed from timeToReset to 0
         this.loser = false; //set to true if the player could not find the right combination
     };
+    welcomeScreen(){
+        ctx.fillStyle = 'powderblue';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.font = "70px Arial";
+        ctx.fillStyle = "purple";
+        ctx.textAlign = "center";
+        ctx.fillText("Welcome", canvas.width/2, 100);
+        ctx.fillStyle = "blue";
+        ctx.font = "40px Arial";
+        ctx.fillText("guessColor is a fun game which can help you identify", canvas.width/2, 200);
+        ctx.fillText("what colors you need to combine to get a target color", canvas.width/2, 250);
+        ctx.fillText("just catch 2 of the falling balls and you will get 1 point.", canvas.width/2, 300);
+        ctx.fillText("if the mixed color matches the target color in the background.", canvas.width/2, 350);
+        ctx.fillText("You have 15 seconds to guess the target color.", canvas.width/2, 400);
+        ctx.fillStyle = "darkred";
+        ctx.font = "50px Arial";
+        ctx.fillText("Have fun!!!", canvas.width/2, 500);
+        ctx.fillStyle = "darkblue";
+        ctx.font = "16px Arial";
+        ctx.fillText("Click anywhere on this box to start", canvas.width/2, 550);
+    }
     
     //to update the information displayed at the bottom of the screen
     updateMessageLine(){
@@ -162,7 +184,7 @@ function init(){
     bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
 
     player = new Player(2);
-    game = new Game(15);
+    // game = new Game(15);
     clearInterval(idVar);
     idVar = setInterval(timer, 1000);
     game.updateMessageLine();
@@ -416,6 +438,17 @@ function animateBallAndBucket() {
     }
 }
 
-init();
-animateBallAndBucket();
-myTimer = setInterval(nextCombination, game.timeToReset*1000);
+function startGame(){
+    document.getElementById("canvas").removeEventListener('click', startGame);
+    init();
+    animateBallAndBucket();
+    myTimer = setInterval(nextCombination, game.timeToReset*1000);
+}
+
+function mainFunction (){
+    game = new Game(15);
+    game.welcomeScreen();
+    var $clickToStart= document.getElementById("canvas").addEventListener('click', startGame);
+}
+
+mainFunction();
