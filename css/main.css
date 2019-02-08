@@ -31,7 +31,13 @@ body, html{
 
 #score {
     padding: 0px 30px;
-    color: yellow;
+    color: chartreuse;
+    font-weight: 600;
+}
+
+#timer {
+    color: darkorange;
+    font-weight: 600;
 }
 #reset-button {
     padding: 0px 50px;
@@ -39,5 +45,6 @@ body, html{
     border-radius: 20px;
     color: maroon;
     background-color: lightsalmon;
+    font-weight: 600;
 }
 

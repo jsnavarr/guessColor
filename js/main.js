@@ -1,64 +1,61 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
-var targetColor;
+var targetColor; //the target color that player must create mixing 2 balls
 
 var raf; //handler for the requestAnimationFram, setInterval, etc.
-var myTimer;
+var myTimer; //linked to setInterval calling to nextCombination function which creates new combination of colors
+var idVar; //to get the time and display the timer counter
 
 //pointers for the information to be displayed 
 var $playerScore = document.querySelector("#score span");
 var $playerMatches = document.querySelector("#matches span");
 var $playerMissmatches = document.querySelector("#missmatches span");
-// var $resetButton = document.getElementById("reset-button").addEventListener('click', resetGame);
+var $gameTimer = document.querySelector("#timer span");
 
 class Ball {
-    constructor(x, y, vx, vy, radius){
-        this.x = x;
-        this.y= -(Math.floor(Math.random()*250))+60;
-        this.vx = vx;
-        this.vy = vy;
-        this.radius = radius;
-        this.color = randomColor();
-        this.border = reverseColor(this.color);
+    constructor(x, y, vy, radius){
+        this.x = x; //the x coordinate of the center of the ball
+        this.y= -(Math.floor(Math.random()*250))+60; //the  y coordinate of the center of the ball which is above the top of the canvas
+        this.vy = vy; //the speed of how the ball falls
+        this.radius = radius; //the radio of the ball
+        this.color = randomColor(); //the color of the ball
+        this.border = reverseColor(this.color); //the border color of the ball
     };
-    resetBall(){
-        this.y= -(Math.floor(Math.random()*250))+60;
+    resetBall(){ //will set the ball to a new color and fall again from the top
+        this.y= -(Math.floor(Math.random()*250))+60; 
         this.color = randomColor();
         this.border = reverseColor(this.color);
     }
 }
 
 class Bucket {
-    constructor(x, y, w, h, hx, hy){
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
-        this.hx = hx;
-        this.hy = hy;
-        this.color = {r: 255, g: 255, b: 255};
-        this.border = reverseColor(targetColor);
-        this.key = false;
-        this.catched = false;
-        this.bubblesCatched = [];
+    constructor(x, y, w, h, hx){
+        this.x = x; //the x coordinate of the left top corner of the bucket
+        this.y = y; //the y coordinate of the right top corner of the bucket
+        this.w = w; //the width of the bucket
+        this.h = h; //the height of the bucket
+        this.hx = hx; //the spped at which the bucket moves when the left or right arrow are pushed
+        this.color = {r: 255, g: 255, b: 255}; //the color filling the bucket but will be set later
+        this.border = reverseColor(targetColor); //the border is kind of the reverse color of the target color
+        this.key = false; //the key pressed (we are interested only in the left and right arrows)
+        this.ballsCatched = []; //it will contain which balls has been catched (up to 2)
     };
-    resetBucket(){
-        this.border = reverseColor(targetColor);
+    resetBucket(){ //this will empty the bucket filled with the target color (same as the background color)
+        this.border = reverseColor(targetColor); 
         this.key = false;
-        this.catched = false;
-        this.bubblesCatched = [];
+        this.ballsCatched = [];
     };
     
 }
 
 class Player {
     constructor(points){
-        this.points = points;
-        this.matches = 0;
-        this.missmatches = 0;
+        this.points = points; //the  initial points for the player (usually 10)
+        this.matches = 0; //how many times the player had found the right combination of colors
+        this.missmatches = 0; //how many times the player has not found the right combination of colors
     };
-    resetPlayer(){
+    resetPlayer(){ //to be called every time a new game is started
         this.matches = 0;
         this.missmatches = 0;
     }
@@ -66,99 +63,108 @@ class Player {
 
 class Game {
     constructor(timeToReset){
-        this.timeToReset = timeToReset;
-        this.match = false;
-        this.isOver = false;
+        this.timeToReset = timeToReset; //this is the time given to the player to find the right combination of colors (usually 15 seconds)
+        this.match = false; //if the right combination was found
+        this.isOver = false; //set to true when the player has reached 0 poiints
+        this.secondsCounter = 0; //to count the seconds elapsed from timeToReset to 0
+        this.loser = false; //set to true if the player could not find the right combination
     };
     
+    //to update the information displayed at the bottom of the screen
     updateMessageLine(){
         $playerScore.textContent = player.points;
         $playerMatches.textContent = player.matches;
         $playerMissmatches.textContent = player.missmatches;
+        if(!game.isOver){
+            $gameTimer.textContent = game.timeToReset;
+        }
     };
 
+    //to start a new game
     resetGame(){
         clearInterval(myTimer);
         cancelAnimationFrame(raf);
-        // player.resetPlayer();
-        // this.match = false;
-        // this.isOver = false;
-
-        // bucket.resetBucket();
         init();
         game.updateMessageLine();
-        // $playerMissmatches.textContent = player.missmatches;
-        // $playerMatches.textContent = player.matches;        
-        // nextCombination();
-        animateBubbleAndBucket();
+        animateBallAndBucket();
         myTimer = setInterval(nextCombination, game.timeToReset*1000);
-        // $playerScore.textContent = player.points;
-        
     }
+
+    //to pause current game when the right combination is found or 2 balls were chosen but they are not the right combination
     pauseGame (timeToPause){
         clearInterval(myTimer);
-        // window.cancelAnimationFrame(raf);
+        clearInterval(idVar);
         setTimeout(function() {
-            // init();
             nextCombination();
-            myTimer = setInterval(nextCombination, game.timeToReset*1000);
-            // $playerScore.textContent = player.points;
-            console.log('winner');
-            console.log('points '+player.points);
-            console.log('game was paused');
+            game.updateMessageLine();
+            if(!game.isOver){
+                myTimer = setInterval(nextCombination, game.timeToReset*1000);
+            }
         }, timeToPause*1000);
     }
+
+    //to display GAME OVER message and stop the game
     displayGameOver(){
         ctx.font = "80px Arial";
         ctx.fillStyle = "red";
         ctx.textAlign = "center";
         ctx.fillText("G A M E   O V E R", canvas.width/2, canvas.height/2);
         clearInterval(myTimer);
+        clearInterval(idVar);
+        cancelAnimationFrame(raf);
+        $gameTimer.textContent = 0;
     }
 }
 
-
+//to create a new combination of colors (called usually every 15 seconds)
 function nextCombination(){
+    //get new colors for the balls, the target color and the bucket
     ball1.resetBall();
     ball2.resetBall();
     ball3.resetBall();
-    
     targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
-
     bucket.resetBucket();
+    //clear and set the intervals to call the timer function every 1 second to update the countdown of the timer
+    clearInterval(idVar);
+    idVar = setInterval(timer, 1000);
+    game.secondsCounter = 0;
 
-    if (!game.match){ //no winner
+    if (!game.match){ //no winner then decrease the player points and increase missmatches
         player.points--;
         player.missmatches++;
-        // $playerScore.textContent = player.points;
-        // $playerMissmatches.textContent = player.missmatches;
-        if(player.points == 0){
+        if(player.points == 0){ //if player reaches 0 then display GAME OVER
             game.isOver = true;
             game.displayGameOver();
         }
-        console.log('points '+player.points);
-    } else {
-        game.match = false;
-    }
+    } 
+    game.match = false;
+    game.loser = false;
     game.updateMessageLine();
 }
 
-function init(){
-    // var canvas = document.getElementById('canvas');
-    // var ctx = canvas.getContext('2d');
+//this will be called every 1 second to update the countdown timer
+function timer() {
+    var dateVar = new Date();
+    var t = dateVar.toLocaleTimeString();
+    var s = (' ' + t).slice(1);
+    game.secondsCounter++;
+    $gameTimer.textContent = game.timeToReset - game.secondsCounter;
+ };
 
-    // if(!game.isOver){
-    ball1 = new Ball (canvas.width/4, 50, 0, 3, 60);
-    ball2 = new Ball (canvas.width/4*2, -36, 0, 3, 60);
-    ball3 = new Ball (canvas.width/4*3, -72, 0, 3, 60);
+ //will be call when the game starts to create all required objects, event listeners
+function init(){
+    ball1 = new Ball (canvas.width/4, 50, 3, 60);
+    ball2 = new Ball (canvas.width/4*2, -36, 3, 60);
+    ball3 = new Ball (canvas.width/4*3, -72, 3, 60);
     
     targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
-    // targetColor = null;
 
     bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
 
     player = new Player(2);
     game = new Game(15);
+    clearInterval(idVar);
+    idVar = setInterval(timer, 1000);
     game.updateMessageLine();
     var $resetButton = document.getElementById("reset-button").addEventListener('click', game.resetGame);
 
@@ -195,13 +201,13 @@ function returnTargetColor(colors){
             mixElem.push(pickedElem)
         }
     }
-    console.log('Bubble ' + (mixElem[0]+1) + ' and bubble ' + (mixElem[1]+1));
+    console.log('Ball ' + (mixElem[0]+1) + ' and ball ' + (mixElem[1]+1));
     // mix the 2 elements (mixElem) and return the mixed color
     return {r: (colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5, g: (colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5, b: (colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5};
 }
 
 //draw the bubble in the parameter
-function drawBubble(ball) {
+function drawBall(ball) {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2, true);
     ctx.fillStyle = returnRGB(ball.border);
@@ -210,7 +216,6 @@ function drawBubble(ball) {
     ctx.arc(ball.x, ball.y, ball.radius-5, 0, Math.PI*2, true);
     ctx.fillStyle = returnRGB(ball.color);
     ctx.fill();
-    ball.x += ball.vx;
     ball.y += ball.vy;
     return ball;
 }
@@ -253,13 +258,13 @@ function drawBucket(winner) {
     ctx.beginPath();
     //if no winner yet
     if (!game.match){
-        if(bucket.bubblesCatched.length == 0 || bucket.bubblesCatched.length == 2){ //draw a full bucket
+        if(bucket.ballsCatched.length == 0 || bucket.ballsCatched.length == 2){ //draw a full bucket
             ctx.moveTo(bucket.x+5, bucket.y);
             ctx.lineTo(bucket.x+bucket.w-5, bucket.y);
             ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
             ctx.lineTo(bucket.x +30, bucket.y+bucket.h-5);
             ctx.lineTo(bucket.x+5, bucket.y);
-            if(bucket.bubblesCatched.length == 0) { //fill the bucket with the bucket border
+            if(bucket.ballsCatched.length == 0) { //fill the bucket with the bucket border
                 ctx.fillStyle = returnRGB(bucket.border);
                 ctx.fill(); 
             } else { //fill the bucket with red around the current color to let user know that he failed
@@ -275,7 +280,7 @@ function drawBucket(winner) {
                 ctx.fillStyle = returnRGB(bucket.color);
                 ctx.fill();        
             }
-        } else { //only 1 bubble has been catched so bucket will be filled half with the color of the bubble catched
+        } else { //only 1 ball has been catched so bucket will be filled half with the color of the ball catched
             ctx.moveTo(bucket.x+20, bucket.y+bucket.h/2);
             ctx.lineTo(bucket.x+bucket.w-20, bucket.y+bucket.h/2);
             ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
@@ -308,25 +313,25 @@ function drawBucket(winner) {
 //mixes the 2 RGB colors sent as parameters
 function mixColor(c1, c2){
     var mixedColor =  {r: c1.r*0.5+c2.r*0.5, g: c1.g*0.5+c2.g*0.5, b: c1.b*0.5+c2.b*0.5};
-    // console.log('color 1' + c1 + 'combined with' + c2 + 'is ' + mixedColor);
     return mixedColor;
 }
 
-//main function to be 
-function animateBubbleAndBucket() {
+//main function to be called every timeToReset seconds to act based on the left or right arrow events (moving the bucket)
+//check if the balls were catched by the bucket, verify if the target color was found and update the screen accordingly
+function animateBallAndBucket() {
     if(!game.isOver){
-        if(!game.match ){
+        if(!game.match && !game.loser){
             //check if ball1 crashes with the bucket
             if((ball1.y > bucket.y) && (ball1.x+30 > bucket.x && ball1.x-20 < bucket.x+100)){
                 ball1.y = 50;
-                if(bucket.bubblesCatched.length == 0){
+                if(bucket.ballsCatched.length == 0){
                     bucket.color = ball1.color;
-                    bucket.bubblesCatched.push(1);
+                    bucket.ballsCatched.push(1);
                     // bucket.catched = true;
                 } else {
-                    if(bucket.bubblesCatched.indexOf(1) == -1 && bucket.bubblesCatched.length < 2){
+                    if(bucket.ballsCatched.indexOf(1) == -1 && bucket.ballsCatched.length < 2){
                         bucket.color = mixColor (bucket.color, ball1.color);
-                        bucket.bubblesCatched.push(1);
+                        bucket.ballsCatched.push(1);
                     }
                 }
             } else if (ball1.y + ball1.vy > canvas.height) {
@@ -335,30 +340,30 @@ function animateBubbleAndBucket() {
             //check if ball2 crashes with the bucket
             if((ball2.y > bucket.y) && (ball2.x+30 > bucket.x && ball2.x-20 < bucket.x+100)){
                 ball2.y = 50;
-                if(bucket.bubblesCatched.length == 0){
+                if(bucket.ballsCatched.length == 0){
                     bucket.color = ball2.color;
-                    bucket.bubblesCatched.push(2);
+                    bucket.ballsCatched.push(2);
                     // bucket.catched = true;
                 } else {
-                    if(bucket.bubblesCatched.indexOf(2) == -1 && bucket.bubblesCatched.length < 2){
+                    if(bucket.ballsCatched.indexOf(2) == -1 && bucket.ballsCatched.length < 2){
                         bucket.color = mixColor (bucket.color, ball2.color);
-                        bucket.bubblesCatched.push(2);
+                        bucket.ballsCatched.push(2);
                     }
                 }
             } else if (ball2.y + ball2.vy > canvas.height) {
                 ball2.y = 50;
             }
-
+            //check if ball3 crashes with the bucket
             if((ball3.y > bucket.y) && (ball3.x+30 > bucket.x && ball3.x-20 < bucket.x+100)){
                 ball3.y = 50;
-                if(bucket.bubblesCatched.length == 0){
+                if(bucket.ballsCatched.length == 0){
                     bucket.color = ball3.color;
-                    bucket.bubblesCatched.push(3);
+                    bucket.ballsCatched.push(3);
                     // bucket.catched = true;
                 } else {
-                    if(bucket.bubblesCatched.indexOf(3) == -1 && bucket.bubblesCatched.length < 2){
+                    if(bucket.ballsCatched.indexOf(3) == -1 && bucket.ballsCatched.length < 2){
                         bucket.color = mixColor (bucket.color, ball3.color);
-                        bucket.bubblesCatched.push(3);
+                        bucket.ballsCatched.push(3);
                     }
                 }
             } else if (ball3.y + ball3.vy > canvas.height) {
@@ -367,51 +372,50 @@ function animateBubbleAndBucket() {
 
             //check if there is a winner
             if(!game.match){  //not a winner yet
-                if(bucket.bubblesCatched.length == 2){
+                if(bucket.ballsCatched.length == 2){
                     if(JSON.stringify(bucket.color) === JSON.stringify(targetColor)){ //there is a winner
                         game.match = true;
                         player.points++;
                         player.matches++;
-                        // $playerScore.textContent = player.points;
-                        // $playerMatches.textContent = player.matches;
-                        game.pauseGame(2);    
-                    } 
+                        game.pauseGame(1);  
+                    } else {
+                        game.loser = true;
+                        game.pauseGame(1);
+                    }
                 }
             }
+            //if left arrow is pushed down move box to the left if it is not already on the left margin
+            if (bucket.key && bucket.key == 37) {
+                if((bucket.x - bucket.hx) > 10)
+                    bucket.x -= bucket.hx; 
+            }
+            //if right arrow is pushed down move box to the right if it is not already on the right margin
+            if (bucket.key && bucket.key == 39) {
+                if((bucket.x + bucket.w + bucket.hx) < canvas.width-10)
+                    bucket.x += bucket.hx; 
+            }
+
+            //make a little frame to the canvas area
+            ctx.fillStyle = returnRGB(reverseColor(targetColor));
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = returnRGB(targetColor);
+            ctx.fillRect(5, 5, canvas.width-10, canvas.height-10);
+
+            ball1 = drawBall(ball1);
+
+            ball2 = drawBall(ball2);
+
+            ball3 = drawBall(ball3);
+
+            drawBucket(game.match);
         }
-        //if left arrow is pushed down move box to the left if it is not already on the left margin
-        if (bucket.key && bucket.key == 37) {
-            if((bucket.x - bucket.hx) > 10)
-                bucket.x -= bucket.hx; 
+        if(!game.isOver){
+            raf = window.requestAnimationFrame(animateBallAndBucket);
         }
-        //if right arrow is pushed down move box to the right if it is not already on the right margin
-        if (bucket.key && bucket.key == 39) {
-            if((bucket.x + bucket.w + bucket.hx) < canvas.width-10)
-                bucket.x += bucket.hx; 
-        }
-
-        //make a little frame to the canvas area
-        ctx.fillStyle = returnRGB(reverseColor(targetColor));
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = returnRGB(targetColor);
-        ctx.fillRect(5, 5, canvas.width-10, canvas.height-10);
-
-        // ctx.clearRect(0,0, canvas.width, canvas.height);
-
-        ball1 = drawBubble(ball1);
-
-        ball2 = drawBubble(ball2);
-
-        ball3 = drawBubble(ball3);
-
-        drawBucket(game.match);
-
-        raf = window.requestAnimationFrame(animateBubbleAndBucket);
     }
 }
 
 init();
-// resetGame();
-animateBubbleAndBucket();
+animateBallAndBucket();
 myTimer = setInterval(nextCombination, game.timeToReset*1000);
