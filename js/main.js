@@ -205,7 +205,7 @@ function init(){
     
     bucket = new Bucket (10, canvas.height-110, 100, 100, 3, 0);
 
-    player = new Player(2);
+    player = new Player(10);
     game = new Game(15);
     clearInterval(idVar);
     idVar = setInterval(timer, 1000);
@@ -378,7 +378,7 @@ function mixColor(c1, c2){
 
 //check if the ball was touched and update bucket color
 function isBallTouched(ball, ballNumber){
-    if((ball.y/2 -100 < touchScreen.y && ball.y/2 +100 > touchScreen.y) && 
+    if((ball.y/2 -150 < touchScreen.y && ball.y/2 +150 > touchScreen.y) && 
     ((window.innerWidth/4)*ballNumber -30 < touchScreen.x && (window.innerWidth/4)*ballNumber +30 > touchScreen.x)){
         ball.y = 50;
         if(bucket.ballsCatched.length == 0){
