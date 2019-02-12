@@ -1,5 +1,5 @@
 var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
+var ctx =   canvas.getContext('2d');
 
 var targetColor; //the target color that player must create mixing 2 balls
 
@@ -12,6 +12,27 @@ var $playerScore = document.querySelector("#score span");
 var $playerMatches = document.querySelector("#matches span");
 var $playerMissmatches = document.querySelector("#missmatches span");
 var $gameTimer = document.querySelector("#timer span");
+var $leftButtonPressed = document.getElementById("left").addEventListener('mousedown', leftArrowPressed);
+var $leftButtonReleased = document.getElementById("left").addEventListener('mouseup', leftArrowReleased);
+var $rightButtonPressed = document.getElementById("right").addEventListener('mousedown', rightArrowPressed);
+var $rightButtonReleased = document.getElementById("right").addEventListener('mouseup', rightArrowReleased);
+
+var $leftButtonPressed = document.getElementById("left").addEventListener('touchstart', leftArrowPressed);
+var $leftButtonReleased = document.getElementById("left").addEventListener('touchend', leftArrowReleased);
+var $rightButtonPressed = document.getElementById("right").addEventListener('touchstart', rightArrowPressed);
+var $rightButtonReleased = document.getElementById("right").addEventListener('touchend', rightArrowReleased);
+
+
+// to keep some values when using touchscreen
+class TouchScreen {
+    constructor(){
+        this.touched = false; //flag is set to true when the screen is touched and false when released
+        this.x = 0; //x coordinate of the point touched in the screen
+        this.y = 0; //y coordinate of the point touched in the screen
+    };
+}
+
+touchScreen = new TouchScreen();
 
 class Ball {
     constructor(x, y, vy, radius){
@@ -42,6 +63,7 @@ class Bucket {
         this.ballsCatched = []; //it will contain which balls has been catched (up to 2)
     };
     resetBucket(){ //this will empty the bucket filled with the target color (same as the background color)
+        this.color = {r: 255, g: 255, b: 255}; //the color filling the bucket but will be set later
         this.border = reverseColor(targetColor); 
         this.key = false;
         this.ballsCatched = [];
@@ -81,8 +103,8 @@ class Game {
         ctx.font = "40px Arial";
         ctx.fillText("guessColor is a fun game which can help you identify", canvas.width/2, 200);
         ctx.fillText("what colors you need to combine to get a target color", canvas.width/2, 250);
-        ctx.fillText("just catch 2 of the falling balls and you will get 1 point.", canvas.width/2, 300);
-        ctx.fillText("if the mixed color matches the target color in the background.", canvas.width/2, 350);
+        ctx.fillText("just catch 2 of the falling balls and you will get 1 point", canvas.width/2, 300);
+        ctx.fillText("if those 2 colors match the background.", canvas.width/2, 350);
         ctx.fillText("You have 15 seconds to guess the target color.", canvas.width/2, 400);
         ctx.fillStyle = "darkred";
         ctx.font = "50px Arial";
@@ -175,16 +197,16 @@ function timer() {
 
  //will be call when the game starts to create all required objects, event listeners
 function init(){
-    ball1 = new Ball (canvas.width/4, 50, 3, 60);
-    ball2 = new Ball (canvas.width/4*2, -36, 3, 60);
-    ball3 = new Ball (canvas.width/4*3, -72, 3, 60);
+    ball1 = new Ball (canvas.width/4, 50, 3, 50);
+    ball2 = new Ball (canvas.width/4*2, -36, 3, 50);
+    ball3 = new Ball (canvas.width/4*3, -72, 3, 50);
     
     targetColor = returnTargetColor([ball1.color, ball2.color, ball3.color]);
-
-    bucket = new Bucket (10, canvas.height-130, 120, 120, 3, 0);
+    
+    bucket = new Bucket (10, canvas.height-110, 100, 100, 3, 0);
 
     player = new Player(2);
-    // game = new Game(15);
+    game = new Game(15);
     clearInterval(idVar);
     idVar = setInterval(timer, 1000);
     game.updateMessageLine();
@@ -197,6 +219,37 @@ function init(){
     window.addEventListener('keyup', function (e) {
         bucket.key = false;
     });
+    //store the x,y coordinates of the point touched in the screen
+    var $startedTouchingCanvas = document.getElementById("canvas").addEventListener('touchstart', function(e){
+        var touchobj = e.changedTouches[0]; // reference first touch point (ie: first finger)
+        touchScreen.x = parseInt(touchobj.clientX); // get x position of touch point relative to left edge of browser
+        touchScreen.y = parseInt(touchobj.clientY); // get y position of touch point relative to left edge of browser
+        touchScreen.touched = true;
+        console.log('touched screen at '+touchScreen.x +', '+touchScreen.y);
+        e.preventDefault();
+    }, false);
+
+    //set the touched flag to  false when stopping touching the screen
+    var $endedTouchingCanvas = document.getElementById("canvas").addEventListener('touchend', function(e){
+        touchScreen.touched = false;
+        e.preventDefault()
+    }, false);    
+}
+
+//when left or right button is clicked on the screen then it is as if the left/arrow key was pressed
+
+function leftArrowPressed(){
+    bucket.key = 37;
+}
+function leftArrowReleased(){
+    bucket.key = false;
+}
+
+function rightArrowPressed(){
+    bucket.key = 39;
+}
+function rightArrowReleased(){
+    bucket.key = false;
 }
 
 //gets an object {r: , g: , b: } and return a string as the actual RGB style
@@ -225,19 +278,20 @@ function returnTargetColor(colors){
     }
     console.log('Ball ' + (mixElem[0]+1) + ' and ball ' + (mixElem[1]+1));
     // mix the 2 elements (mixElem) and return the mixed color
-    return {r: (colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5, g: (colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5, b: (colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5};
+    return {r: Math.floor((colors[mixElem[0]].r)*0.5+(colors[mixElem[1]].r)*0.5), g: Math.floor((colors[mixElem[0]].g)*0.5+(colors[mixElem[1]].g)*0.5), b: Math.floor((colors[mixElem[0]].b*0.5)+(colors[mixElem[1]].b)*0.5)};
 }
 
 //draw the bubble in the parameter
 function drawBall(ball) {
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2, true);
-    ctx.fillStyle = returnRGB(ball.border);
-    ctx.fill();
+    // ctx = canvas.getContext('2d');
+    ctx.strokeStyle = returnRGB(ball.border);
+    ctx.fillStyle = returnRGB(ball.color);
+    ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius-5, 0, Math.PI*2, true);
-    ctx.fillStyle = returnRGB(ball.color);
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
     ball.y += ball.vy;
     return ball;
 }
@@ -267,131 +321,119 @@ function reverseColor (color){
 //draw the bucket
 function drawBucket(winner) {
     //draw bucket with the bucket border color
+    ctx.fillStyle = returnRGB(bucket.border);
     ctx.beginPath();
     ctx.moveTo(bucket.x, bucket.y);
     ctx.lineTo(bucket.x+bucket.w, bucket.y);
     ctx.lineTo(bucket.x+bucket.w-20, bucket.y+bucket.h);
     ctx.lineTo(bucket.x +20, bucket.y+bucket.h);
     ctx.lineTo(bucket.x, bucket.y);
-    ctx.fillStyle = returnRGB(bucket.border);
+    ctx.closePath();
     ctx.fill();
-    //draw whta is inside of the bucket
+
     //if there is a winner then put green around the target color inside the bucket
-    ctx.beginPath();
-    //if no winner yet
-    if (!game.match){
-        if(bucket.ballsCatched.length == 0 || bucket.ballsCatched.length == 2){ //draw a full bucket
-            ctx.moveTo(bucket.x+5, bucket.y);
-            ctx.lineTo(bucket.x+bucket.w-5, bucket.y);
-            ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
-            ctx.lineTo(bucket.x +30, bucket.y+bucket.h-5);
-            ctx.lineTo(bucket.x+5, bucket.y);
-            if(bucket.ballsCatched.length == 0) { //fill the bucket with the bucket border
-                ctx.fillStyle = returnRGB(bucket.border);
-                ctx.fill(); 
-            } else { //fill the bucket with red around the current color to let user know that he failed
-                ctx.fillStyle = 'red';
-                ctx.fill(); 
-                //then add inside the current bucket color
-                ctx.beginPath();
-                ctx.moveTo(bucket.x+10, bucket.y+5);
-                ctx.lineTo(bucket.x+bucket.w-10, bucket.y+5);
-                ctx.lineTo(bucket.x+bucket.w-40, bucket.y+bucket.h-10);
-                ctx.lineTo(bucket.x +40, bucket.y+bucket.h-10);
-                ctx.lineTo(bucket.x+10, bucket.y+5);
-                ctx.fillStyle = returnRGB(bucket.color);
-                ctx.fill();        
-            }
-        } else { //only 1 ball has been catched so bucket will be filled half with the color of the ball catched
-            ctx.moveTo(bucket.x+20, bucket.y+bucket.h/2);
-            ctx.lineTo(bucket.x+bucket.w-20, bucket.y+bucket.h/2);
-            ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
-            ctx.lineTo(bucket.x +30, bucket.y+bucket.h-5);
-            ctx.lineTo(bucket.x+20, bucket.y+bucket.h/2);
-            ctx.fillStyle = returnRGB(bucket.color);
-            ctx.fill();    
+    if(bucket.ballsCatched.length == 2){ 
+        if (!game.match){     //draw a full bucket with red around the inside color for a loser
+            ctx.fillStyle = 'red';
+        } else {  //draw a full bucket with green around the inside color for a loser
+            ctx.fillStyle = 'green';
         }
-    } else { //there is a winner so fill bucket with green around the target color
         ctx.beginPath();
         ctx.moveTo(bucket.x+5, bucket.y);
         ctx.lineTo(bucket.x+bucket.w-5, bucket.y);
         ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
         ctx.lineTo(bucket.x +30, bucket.y+bucket.h-5);
         ctx.lineTo(bucket.x+5, bucket.y);
-        ctx.fillStyle = 'green';
-        ctx.fill();        
-        //now the target color
+        ctx.closePath();
+        ctx.fill(); 
+        //then add inside the current bucket color
+        ctx.fillStyle = returnRGB(bucket.color);
         ctx.beginPath();
         ctx.moveTo(bucket.x+10, bucket.y+5);
         ctx.lineTo(bucket.x+bucket.w-10, bucket.y+5);
         ctx.lineTo(bucket.x+bucket.w-40, bucket.y+bucket.h-10);
         ctx.lineTo(bucket.x +40, bucket.y+bucket.h-10);
-        ctx.lineTo(bucket.x+10, bucket.y+5);
-        ctx.fillStyle = returnRGB(targetColor);
+        ctx.lineTo(bucket.x+10, bucket.y+10);
+        ctx.closePath();
         ctx.fill();        
+    }
+    if(bucket.ballsCatched.length == 1){ //only 1 ball has been catched so bucket will be filled half with the color of the ball catched
+        ctx.fillStyle = returnRGB(bucket.color);
+        ctx.beginPath();
+        ctx.moveTo(bucket.x+20, bucket.y+bucket.h/2);
+        ctx.lineTo(bucket.x+bucket.w-20, bucket.y+bucket.h/2);
+        ctx.lineTo(bucket.x+bucket.w-30, bucket.y+bucket.h-5);
+        ctx.lineTo(bucket.x +30, bucket.y+bucket.h-5);
+        ctx.lineTo(bucket.x+20, bucket.y+bucket.h/2);
+        ctx.closePath();
+        ctx.fill();    
     }
 }
 
 //mixes the 2 RGB colors sent as parameters
 function mixColor(c1, c2){
-    var mixedColor =  {r: c1.r*0.5+c2.r*0.5, g: c1.g*0.5+c2.g*0.5, b: c1.b*0.5+c2.b*0.5};
+    var mixedColor =  {r: Math.floor(c1.r*0.5+c2.r*0.5), g: Math.floor(c1.g*0.5+c2.g*0.5), b: Math.floor(c1.b*0.5+c2.b*0.5)};
     return mixedColor;
 }
+
+//check if the ball was touched and update bucket color
+function isBallTouched(ball, ballNumber){
+    if((ball.y/2 -100 < touchScreen.y && ball.y/2 +100 > touchScreen.y) && 
+    ((window.innerWidth/4)*ballNumber -30 < touchScreen.x && (window.innerWidth/4)*ballNumber +30 > touchScreen.x)){
+        ball.y = 50;
+        if(bucket.ballsCatched.length == 0){
+            bucket.color = ball.color;
+            bucket.ballsCatched.push(ballNumber);
+            // bucket.catched = true;
+        } else {
+            if(bucket.ballsCatched.indexOf(ballNumber) == -1 && bucket.ballsCatched.length < 2){
+                bucket.color = mixColor (bucket.color, ball.color);
+                bucket.ballsCatched.push(ballNumber);
+            }
+        }
+    }
+    return ball;
+}
+
+//check if the ball was touched and update bucket color
+function isBallCatched(ball, ballNumber){
+    if((ball.y > bucket.y) && (ball.x+30 > bucket.x && ball.x-20 < bucket.x+100)){
+        ball.y = 50;
+        if(bucket.ballsCatched.length == 0){
+            bucket.color = ball.color;
+            bucket.ballsCatched.push(ballNumber);
+            // bucket.catched = true;
+        } else {
+            if(bucket.ballsCatched.indexOf(ballNumber) == -1 && bucket.ballsCatched.length < 2){
+                bucket.color = mixColor (bucket.color, ball.color);
+                bucket.ballsCatched.push(ballNumber);
+            }
+        }
+    } else if (ball.y + ball.vy > canvas.height) {
+        ball.y = 50;
+    }
+    return ball;
+}
+
 
 //main function to be called every timeToReset seconds to act based on the left or right arrow events (moving the bucket)
 //check if the balls were catched by the bucket, verify if the target color was found and update the screen accordingly
 function animateBallAndBucket() {
     if(!game.isOver){
         if(!game.match && !game.loser){
-            //check if ball1 crashes with the bucket
-            if((ball1.y > bucket.y) && (ball1.x+30 > bucket.x && ball1.x-20 < bucket.x+100)){
-                ball1.y = 50;
-                if(bucket.ballsCatched.length == 0){
-                    bucket.color = ball1.color;
-                    bucket.ballsCatched.push(1);
-                    // bucket.catched = true;
-                } else {
-                    if(bucket.ballsCatched.indexOf(1) == -1 && bucket.ballsCatched.length < 2){
-                        bucket.color = mixColor (bucket.color, ball1.color);
-                        bucket.ballsCatched.push(1);
-                    }
-                }
-            } else if (ball1.y + ball1.vy > canvas.height) {
-                ball1.y = 50;
+            //check if user touched ball1 with his finger
+            if(touchScreen.touched){
+                console.log('ball1 position '+ball1.x + ', '+ball1.y);
+                console.log('ball2 position '+ball2.x + ', '+ball2.y);
+                console.log('ball3 position '+ball3.x + ', '+ball3.y);
+                //check for ball1 located at window.innerWidth/4 (each ball is 1/4 width apart)
+                ball1 = isBallTouched(ball1, 1);
+                ball2 = isBallTouched(ball2, 2);
+                ball3 = isBallTouched(ball3, 3);
             }
-            //check if ball2 crashes with the bucket
-            if((ball2.y > bucket.y) && (ball2.x+30 > bucket.x && ball2.x-20 < bucket.x+100)){
-                ball2.y = 50;
-                if(bucket.ballsCatched.length == 0){
-                    bucket.color = ball2.color;
-                    bucket.ballsCatched.push(2);
-                    // bucket.catched = true;
-                } else {
-                    if(bucket.ballsCatched.indexOf(2) == -1 && bucket.ballsCatched.length < 2){
-                        bucket.color = mixColor (bucket.color, ball2.color);
-                        bucket.ballsCatched.push(2);
-                    }
-                }
-            } else if (ball2.y + ball2.vy > canvas.height) {
-                ball2.y = 50;
-            }
-            //check if ball3 crashes with the bucket
-            if((ball3.y > bucket.y) && (ball3.x+30 > bucket.x && ball3.x-20 < bucket.x+100)){
-                ball3.y = 50;
-                if(bucket.ballsCatched.length == 0){
-                    bucket.color = ball3.color;
-                    bucket.ballsCatched.push(3);
-                    // bucket.catched = true;
-                } else {
-                    if(bucket.ballsCatched.indexOf(3) == -1 && bucket.ballsCatched.length < 2){
-                        bucket.color = mixColor (bucket.color, ball3.color);
-                        bucket.ballsCatched.push(3);
-                    }
-                }
-            } else if (ball3.y + ball3.vy > canvas.height) {
-                ball3.y = 50;
-            }
-
+            ball1 = isBallCatched(ball1, 1);
+            ball2 = isBallCatched(ball2, 2);
+            ball3 = isBallCatched(ball3, 3);
             //check if there is a winner
             if(!game.match){  //not a winner yet
                 if(bucket.ballsCatched.length == 2){
@@ -420,10 +462,8 @@ function animateBallAndBucket() {
             //make a little frame to the canvas area
             ctx.fillStyle = returnRGB(reverseColor(targetColor));
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             ctx.fillStyle = returnRGB(targetColor);
             ctx.fillRect(5, 5, canvas.width-10, canvas.height-10);
-
             ball1 = drawBall(ball1);
 
             ball2 = drawBall(ball2);

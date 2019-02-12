@@ -1,50 +1,132 @@
 
-canvas{
+#canvas{
+    width: 95%;
+    height: 95%;
     background: azure;
     border-radius: 20px;
 }
 
 body, html{
-    height: 100%;
     background: black;
     margin: 10px auto;
     text-align: center;
-    
 }
 
 #reset-button, #message-line {
     background: royalblue;
     color: azure;
-    font-size: 24px;
+    font-size: 16px;
     font-family: helvetica;
 }
 
 #message-line {
-    width: 1200px;
+    width: 95%;
     margin: 0 auto;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     border: 5px double azure;
-    border-radius: 20px;
+    border-radius: 10px;
 }
 
 #score {
-    padding: 0px 30px;
+    padding: 0px 10px;
+    margin: auto;
     color: chartreuse;
     font-weight: 600;
+}
+
+#matches, #missmatches {
+    display: none;
 }
 
 #timer {
     color: darkorange;
     font-weight: 600;
+    margin: auto;
 }
 #reset-button {
-    padding: 0px 50px;
+    padding: 0px 5px;
+    margin: auto;
     border: 5px double maroon;
-    border-radius: 20px;
+    border-radius: 10px;
     color: maroon;
     background-color: lightsalmon;
     font-weight: 600;
 }
 
+#left {
+    width: 0; 
+    height: 0px; 
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent; 
+    border-right:10px solid blue; 
+    align-self: center;
+}
+
+#right {
+    width: 0; 
+    height: 0px; 
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent; 
+    border-left:10px solid blue; 
+    align-self: center;
+}
+.circle {
+    align-self: center;
+    padding: 5px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: gray;
+    justify-content: center;
+    display: flex;
+    flex-direction: row;
+}
+
+@media only screen and (min-width: 800px) {
+#canvas{
+    width: 80%;
+    height: 400;
+    border-radius: 20px;
+}
+
+#reset-button, #message-line {
+    font-size: 24px;
+}
+
+#message-line {
+    width: 80%;
+}
+
+/* #score {
+    padding: 0px 30px;
+} */
+
+/* #matches, #missmatches {
+    display: flex;
+    padding: 0 20px;   
+} */
+
+#reset-button {
+    padding: 0px 20px;
+    border: 5px double maroon;
+    border-radius: 20px;
+}
+
+#left {
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent; 
+    border-right:20px solid blue; 
+}
+
+#right {
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent; 
+    border-left:20px solid blue; 
+}
+.circle {
+    width: 50px;
+    height: 50px;
+}
+}
