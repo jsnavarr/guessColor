@@ -13,7 +13,9 @@ When there is match the bucked will be filled with the target color surrounded b
 
 When there is a missmatch the bucket color will be surrounded by red.
 
-![Welcome](https://github.com/jsnavarr/guessColor/public/static/images/guessColorMS.jpg)
+
+
+![Welcome](https://github.com/jsnavarr/guessColor/blob/master/public/static/images/guessColorMS.jpg)
 
 ## Design
 Classes for the main objects were defined (Ball, Bucket, Player, Game) with their respective attributes and methods. 
