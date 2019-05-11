@@ -1,6 +1,8 @@
 ## guessColor
 **guessColor** is a game which will let user guess what colors has to mix in order to obtain the target color.
 
+Live version: [guessColor](http://splendid-cough.surge.sh/ "guessColor Homepage")
+
 
 ## user Stories
 **guessColor** will display a target color in the background (let's say green) then 3 bubbles will drop from the top (let's say red, yellow and blue), the user must catch in a bucket 2 of those bubbles to obtain the target color (in this case it has to be yellow and blue), if user gets the target color then he gets points, if he does not then his score will be reduced.
@@ -10,6 +12,8 @@ The target color will be reset every 20 seconds until the player ends the game o
 When there is match the bucked will be filled with the target color surrounded by green.
 
 When there is a missmatch the bucket color will be surrounded by red.
+
+![Welcome](https://github.com/jsnavarr/guessColor/public/static/images/guessColorMS.png)
 
 ## Design
 Classes for the main objects were defined (Ball, Bucket, Player, Game) with their respective attributes and methods. 
